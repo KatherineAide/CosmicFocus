@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cosmic Focus</title>
+  <style>
+    @font-face {
+      font-family: 'Pixel';
+      src: url('fonts/PressStart2P-Regular.ttf') format('truetype');
+    }
+
+    :root {
+      --bg: #03050f;
+      --surface: #0a0f1e;
+      --accent: #6c63ff;
+      --accent2: #00d4ff;
+      --text: #e8eaf6;
+      --muted: #5c6bc0;
+      --border: rgba(108, 99, 255, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 500px;
+      height: 300px;
+      overflow: hidden;
+      font-family: 'Pixel', monospace;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* TITLEBAR */
+    #titlebar {
+      width: 100%;
+      height: 28px;
+      background: rgba(97, 167, 231, 0.98);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      -webkit-app-region: drag;
+      flex-shrink: 0;
+    }
+
+    #titlebar span {
+      font-family: 'Pixel', monospace;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: #03050f;
+      text-transform: uppercase;
+    }
+
+    .win-controls {
+      display: flex;
+      gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+
+    .win-btn {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: opacity 0.2s;
+    }
+
+    .win-btn:hover { opacity: 0.5; }
+    .win-close { background: #971f19; }
+    .win-min   { background: #0e4261; }
+    .win-max   { background: #27c93f; }
+
+    /* MAIN */
+    #app {
+      height: calc(300px - 28px);
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    /* LEFT COLUMN — timer */
+    #left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      padding: 8px 10px;
+      width: 175px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+
+    #stage-title {
+      font-family: 'Pixel', monospace;
+      font-size: 6px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      text-align: center;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 1s linear;
+      width: 100%;
+    }
+
+    #time {
+      font-family: 'Pixel', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      width: 100%;
+    }
+
+    button {
+      padding: 5px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Pixel', monospace;
+      font-size: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: opacity 0.2s, transform 0.1s;
+      -webkit-app-region: no-drag;
+      width: 100%;
+    }
+
+    button:hover  { opacity: 0.85; }
+    button:active { transform: scale(0.97); }
+
+    .btn-start { background: #817dca; color: #fff; }
+    .btn-pause { background: #6d9ae1; color: #fff; }
+    .btn-reset { background: #e74c3c; color: #fff; }
+    .btn-next  { background: #00d4ff; color: #03050f; }
+
+    .stats {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .stat {
+      flex: 1;
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 2px;
+    }
+
+    .stat-val {
+      font-family: 'Pixel', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-lbl {
+      font-size: 5px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* RIGHT COLUMN — era grid */
+    #right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 6px 6px 8px;
+      gap: 5px;
+      overflow: hidden;
+    }
+
+    /* ACTIVE ERA — big card on top */
+    #active-card {
+      position: relative;
+      width: 100%;
+      height: 108px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid var(--accent);
+      box-shadow: 0 0 10px rgba(108,99,255,0.35);
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+    }
+
+    #active-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #active-card .card-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(3,5,15,0.92));
+      padding: 20px 8px 7px;
+    }
+
+    #active-card .card-title {
+      font-family: 'Pixel', monospace;
+      font-size: 7px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    #active-card .card-desc {
+      font-family: sans-serif;
+      font-size: 8px;
+      color: #a0b8cc;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* GRID — 3x2 for remaining eras */
+    #era-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 4px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .era-cell {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s, opacity 0.2s;
+      opacity: 0.55;
+      -webkit-app-region: no-drag;
+    }
+
+    .era-cell:hover {
+      border-color: var(--accent);
+      opacity: 0.85;
+    }
+
+    .era-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .era-cell .cell-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(3,5,15,0.88));
+      padding: 8px 4px 3px;
+      font-family: 'Pixel', monospace;
+      font-size: 5px;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .era-cell.done {
+      opacity: 0.3;
+    }
+
+    .era-cell.done::after {
+      content: '✓';
+      position: absolute;
+      top: 3px; right: 5px;
+      font-size: 10px;
+      color: var(--accent2);
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="titlebar">
+    <div class="win-controls">
+      <button class="win-btn win-close" onclick="window.close()"></button>
+      <button class="win-btn win-min"   onclick="require('electron').ipcRenderer.send('minimize')"></button>
+      <button class="win-btn win-max"   onclick="require('electron').ipcRenderer.send('maximize')"></button>
+    </div>
+    <span>Cosmic Focus</span>
+    <span style="width:44px;"></span>
+  </div>
+
+  <div id="app">
+
+    <div id="left">
+      <div id="stage-title">Big Bang</div>
+      <div id="time">25:00</div>
+      <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+      <div class="controls">
+        <button class="btn-start" onclick="startTimer()">Start</button>
+        <button class="btn-pause" onclick="pauseTimer()">Pause</button>
+        <button class="btn-reset" onclick="resetTimer()">Reset</button>
+        <button class="btn-next"  onclick="nextStage()">Next</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="s-done">0</div><div class="stat-lbl">Done</div></div>
+        <div class="stat"><div class="stat-val" id="s-mins">0</div><div class="stat-lbl">Mins</div></div>
+      </div>
+    </div>
+
+    <div id="right">
+      <div id="active-card" onclick=""></div>
+      <div id="era-grid"></div>
+    </div>
+
+  </div>
+
+<script>
+const startSound = new Audio('sounds/541887__d4xx__pop-up-sound.wav');
+const endSound   = new Audio('sounds/763015__6james__low-beep.wav');
+const stages = [
+  { title: "Big Bang",      image: "Assests/1.png", desc: "13.8B years ago, all matter exploded from a single point, creating space and time itself." },
+  { title: "Dark Ages",     image: "Assests/6.png", desc: "The universe was dark, filled with hydrogen fog. No stars existed yet — just silence." },
+  { title: "First Stars",   image: "Assests/3.png", desc: "Gravity pulled gas into clumps that ignited as the first massive stars, lighting the cosmos." },
+  { title: "Galaxies",      image: "Assests/5.png", desc: "Billions of stars clumped together forming the first galaxies across the universe." },
+  { title: "Solar System",  image: "Assests/2.png", desc: "4.6B years ago, a dust cloud collapsed to form our Sun and its orbiting planets." },
+  { title: "Life Emerges",  image: "Assests/4.png", desc: "Simple molecules in Earth's oceans combined into the first living cells." },
+  { title: "Earth",         image: "Assests/7.png", desc: "A pale blue dot teeming with life, civilizations, and now — your focus session." }
+  
+];
+
+const TOTAL = 25 * 60;
+let currentStage = 0;
+let totalTime = TOTAL;
+let timer, running = false;
+let sessionsDone = 0, minsFocused = 0;
+
+function renderRight() {
+  const active = stages[currentStage];
+
+  const card = document.getElementById("active-card");
+  card.innerHTML = `
+    <img src="${active.image}" alt="${active.title}">
+    <div class="card-overlay">
+      <div class="card-title">${active.title}</div>
+      <div class="card-desc">${active.desc}</div>
+    </div>`;
+
+  const grid = document.getElementById("era-grid");
+  grid.innerHTML = "";
+
+  const others = stages.map((s, i) => ({ ...s, idx: i })).filter((_, i) => i !== currentStage);
+
+  others.forEach(stage => {
+    const cell = document.createElement("div");
+    cell.className = "era-cell" + (stage.idx < currentStage ? " done" : "");
+    cell.innerHTML = `
+      <img src="${stage.image}" alt="${stage.title}">
+      <div class="cell-label">${stage.title}</div>`;
+    cell.onclick = () => jumpTo(stage.idx);
+    grid.appendChild(cell);
+  });
+}
+
+function jumpTo(i) {
+  clearInterval(timer); running = false;
+  currentStage = i; totalTime = TOTAL;
+  updateStage(); updateDisplay();
+}
+
+function updateStage() {
+  document.getElementById("stage-title").textContent = stages[currentStage].title;
+  renderRight();
+}
+
+function updateDisplay() {
+  const m = Math.floor(totalTime / 60);
+  const s = totalTime % 60;
+  document.getElementById("time").textContent =
+    String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
+  document.getElementById("progress").style.width = ((totalTime / TOTAL) * 100) + "%";
+}
+
+function nextStage() {
+  clearInterval(timer); running = false;
+  endSound.currentTime = 0;
+  endSound.play();
+  sessionsDone++;
+  minsFocused += Math.round((TOTAL - totalTime) / 60);
+  document.getElementById("s-done").textContent = sessionsDone;
+  document.getElementById("s-mins").textContent = minsFocused;
+  if (currentStage < stages.length - 1) {
+    currentStage++; totalTime = TOTAL;
+    updateStage(); updateDisplay();
+  } else {
+    alert("Universe complete!");
+    resetTimer();
+  }
+}
+
+function startTimer() {
+  if (running) return;
+  running = true;
+  startSound.currentTime = 0;
+  startSound.play();
+  timer = setInterval(() => {
+    if (totalTime > 0) { totalTime--; updateDisplay(); }
+    else nextStage();
+  }, 1000);
+}
+
+function pauseTimer()  { clearInterval(timer); running = false; }
+
+function resetTimer() {
+  clearInterval(timer); running = false;
+  totalTime = TOTAL; currentStage = 0;
+  updateStage(); updateDisplay();
+}
+
+updateStage();
+updateDisplay();
+
+</script>
+</body>
+</html>

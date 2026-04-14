@@ -1,0 +1,40 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  
+  body {
+    margin: 0;
+    width: 500px;
+    height: 200px;
+  
+    background: pink;
+    user-select: none;
+    -webkit-app-region: drag;
+  }
+  
+  .app {
+    padding: 16px;
+  }
+  
+  button,
+  input,
+  textarea,
+  select {
+    -webkit-app-region: no-drag;
+    cursor: pointer;
+  }
+  body {
+    -webkit-app-region: drag;  /* ADD THIS */
+    margin: 0;
+    font-family: 'Pixel', monospace;
+  }
+  button, .stage, .progress-track {
+    -webkit-app-region: no-drag;
+  }
+  @font-face {
+    font-family: 'Pixel';
+    src: url('fonts/PressStart2P-Regular.ttf') format('truetype');
+  }
+ 
+  
